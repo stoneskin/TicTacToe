@@ -1,4 +1,5 @@
 from checker import CheckerO, CheckerX, Checker
+from checker_grid import CheckerGrid
 import pygame
 from pygame import image, mouse, transform
 from typing import Tuple, List
@@ -14,16 +15,6 @@ RESTART_BUTTON_HEIGHT = 40
 STATUS_TEXT_X = 150
 STATUS_TEXT_Y = 10
 
-class CheckerGrid:
-    """A class representing a single grid cell on the TicTacToe board."""
-    def __init__(self, pos: Tuple[int, int]) -> None:
-        """Initialize a grid cell with a position and no checker.
-        
-        Args:
-            pos: A tuple of (x, y) coordinates for the cell's position.
-        """
-        self.pos: Tuple[int, int] = pos
-        self.checker: Checker = None
 
 class Board:
     """A class representing the TicTacToe game board."""
