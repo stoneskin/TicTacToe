@@ -43,12 +43,27 @@ class Board:
         
         # Display status message
         font = pygame.font.Font(None, 36)
-        text = font.render(self.statusMessage, True, (0, 0, 0))
-        screen.blit(text, (10, 10))
+        if "Wins!" in self.statusMessage:
+            text = font.render(self.statusMessage, True, (0, 128, 0))  # Green for win message
+        else:
+            text = font.render(self.statusMessage, True, (0, 0, 0))
+        screen.blit(text, (150, 10))
+        
+        # Display restart button when game is over
+        if self.gameOver:
+            restart_button = pygame.Rect(350, 50, 120, 40)
+            pygame.draw.rect(screen, (0, 128, 0), restart_button)
+            restart_text = font.render("Restart", True, (255, 255, 255))
+            screen.blit(restart_text, (restart_button.x + 20, restart_button.y + 10))
     
     def onEvent(self, event) -> None:
         if event.type == pygame.MOUSEBUTTONDOWN:
             clickPos:tuple[int,int] = mouse.get_pos()
+            if self.gameOver:
+                restart_button = pygame.Rect(400, 50, 120, 40)
+                if restart_button.collidepoint(clickPos):
+                    self.resetGame()
+                    return
             self.setNewChecker(clickPos)
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r and self.gameOver:
@@ -118,4 +133,13 @@ class Board:
             self.gameOver = True
             self.statusMessage = "Game Over: It's a Draw!"
             return
+            
+    def resetGame(self) -> None:
+        self.currentPlayer = 'x'
+        self.gameOver = False
+        self.winner = None
+        self.statusMessage = "Player X's Turn"
+        for row in self.checkerPositions:
+            for cell in row:
+                cell.checker = None
     
