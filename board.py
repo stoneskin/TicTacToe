@@ -17,9 +17,12 @@ class Board:
         #self.checker1=CheckerO((100,100))
         #self.checker2=CheckerX((300,100))
         
-        self.currentPlayer:str='x'
+        self.currentPlayer:str = 'x'
+        self.gameOver:bool = False
+        self.winner:str = None
+        self.statusMessage:str = "Player X's Turn"
         
-        self.checkerPositions:list[list[CheckerGrid]]=[]
+        self.checkerPositions:list[list[CheckerGrid]] = []
         self.d_w = int((width-20)/3)
         self.d_h = int ((height-50)/3)     
         print(f"d_w={self.d_w} d_h={self.d_h}")    
@@ -31,42 +34,88 @@ class Board:
                 checkData:CheckerGrid=CheckerGrid(pos)
                 row.append(checkData)
         
-    def display(self,screen) ->None:
+    def display(self, screen) -> None:
         screen.blit(self.img, self.pos)
-        #self.checker1.display(screen)
-        #self.checker2.display(screen)
         for checkerRow in self.checkerPositions:
             for checkerData in checkerRow:
-                if(checkerData.checker != None):
+                if checkerData.checker is not None:
                     checkerData.checker.display(screen)
+        
+        # Display status message
+        font = pygame.font.Font(None, 36)
+        text = font.render(self.statusMessage, True, (0, 0, 0))
+        screen.blit(text, (10, 10))
     
-    def onEvent(self,event) ->None:
-        if event.type==pygame.MOUSEBUTTONDOWN :
+    def onEvent(self, event) -> None:
+        if event.type == pygame.MOUSEBUTTONDOWN:
             clickPos:tuple[int,int] = mouse.get_pos()
             self.setNewChecker(clickPos)
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r and self.gameOver:
+                self.resetGame()
             
     def setNewChecker(self, pos:tuple[int,int]) ->None:
-        checkData:CheckerGrid= self.findBoardPos(pos)
-        if(checkData!=None):
-            if(self.currentPlayer == 'x'):
-                checkData.checker= CheckerX(checkData.pos)
+        if self.gameOver:
+            return
+        checkData:CheckerGrid = self.findBoardPos(pos)
+        if checkData != None and checkData.checker is None:
+            if self.currentPlayer == 'x':
+                checkData.checker = CheckerX(checkData.pos)
                 self.currentPlayer = 'o'
+                self.statusMessage = "Player O's Turn"
             else:
-                checkData.checker= CheckerO(checkData.pos)
-                self.currentPlayer = 'x'        
+                checkData.checker = CheckerO(checkData.pos)
+                self.currentPlayer = 'x'
+                self.statusMessage = "Player X's Turn"
+            self.checkWinCondition()
         
     
-    def findBoardPos(self,pos) ->CheckerGrid:   
-        print(f"click pos: (x:{pos[0]},y:{pos[1]})")     
+    def findBoardPos(self, pos) -> CheckerGrid:
+        print(f"click pos: (x:{pos[0]},y:{pos[1]})")
         for checkerRow in self.checkerPositions:
             for checkerData in checkerRow:
-                if checkerData.checker == None:
-                    if( pos[0]> checkerData.pos[0]-20   and pos[0]< checkerData.pos[0] +self.d_w/2+20):
-                      
-                        if( pos[1]> checkerData.pos[1] -20  and pos[1]< checkerData.pos[1] +self.d_h/2+20):
-                            print(f"checker pos: (x:{checkerData.pos[0]},y:{checkerData.pos[1]})")    
-                            print("x >",(checkerData.pos[0] ), "and <", (checkerData.pos[0] +self.d_w/2))
-                            print("y >",(checkerData.pos[1]  ), "and <", (checkerData.pos[1] +self.d_h/2))
+                if checkerData.checker is None:
+                    if pos[0] > checkerData.pos[0] - 20 and pos[0] < checkerData.pos[0] + self.d_w/2 + 20:
+                        if pos[1] > checkerData.pos[1] - 20 and pos[1] < checkerData.pos[1] + self.d_h/2 + 20:
+                            print(f"checker pos: (x:{checkerData.pos[0]},y:{checkerData.pos[1]})")
+                            print("x >", (checkerData.pos[0]), "and <", (checkerData.pos[0] + self.d_w/2))
+                            print("y >", (checkerData.pos[1]), "and <", (checkerData.pos[1] + self.d_h/2))
                             return checkerData
         return None
+
+    def checkWinCondition(self) -> None:
+        # Check rows
+        for row in self.checkerPositions:
+            if row[0].checker and all(cell.checker and cell.checker.getValue() == row[0].checker.getValue() for cell in row):
+                self.gameOver = True
+                self.winner = row[0].checker.getValue()
+                self.statusMessage = f"Player {self.winner} Wins!"
+                return
+        
+        # Check columns
+        for col in range(3):
+            if self.checkerPositions[0][col].checker and all(self.checkerPositions[row][col].checker and self.checkerPositions[row][col].checker.getValue() == self.checkerPositions[0][col].checker.getValue() for row in range(3)):
+                self.gameOver = True
+                self.winner = self.checkerPositions[0][col].checker.getValue()
+                self.statusMessage = f"Player {self.winner} Wins!"
+                return
+        
+        # Check diagonals
+        if self.checkerPositions[0][0].checker and all(self.checkerPositions[i][i].checker and self.checkerPositions[i][i].checker.getValue() == self.checkerPositions[0][0].checker.getValue() for i in range(3)):
+            self.gameOver = True
+            self.winner = self.checkerPositions[0][0].checker.getValue()
+            self.statusMessage = f"Player {self.winner} Wins!"
+            return
+        
+        if self.checkerPositions[0][2].checker and all(self.checkerPositions[i][2-i].checker and self.checkerPositions[i][2-i].checker.getValue() == self.checkerPositions[0][2].checker.getValue() for i in range(3)):
+            self.gameOver = True
+            self.winner = self.checkerPositions[0][2].checker.getValue()
+            self.statusMessage = f"Player {self.winner} Wins!"
+            return
+        
+        # Check for draw
+        if all(cell.checker for row in self.checkerPositions for cell in row):
+            self.gameOver = True
+            self.statusMessage = "Game Over: It's a Draw!"
+            return
     
