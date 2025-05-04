@@ -1,31 +1,39 @@
 from board import Board
 import pygame
 
-pygame.init()
-width, height = 480, 480
-screen=pygame.display.set_mode((width,height))
-keep_going = True
+# Constants for screen dimensions
+SCREEN_WIDTH = 480
+SCREEN_HEIGHT = 480
+BACKGROUND_COLOR = (0, 0, 0)  # Black background
 
-board=Board(0,0,width, height)
+def main() -> None:
+    """Main function to run the TicTacToe game."""
+    pygame.init()
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("TicTacToe Game")
+    keep_going = True
+    
+    # Initialize the game board
+    board = Board(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+    
+    # Main game loop
+    while keep_going:
+        # Clear the screen before drawing
+        screen.fill(BACKGROUND_COLOR)
+        # Draw the game elements
+        board.display(screen)
+        # Update the screen
+        pygame.display.flip()  # Updates the entire display, faster than update()
+        # Process events
+        for event in pygame.event.get():
+            board.onEvent(event)
+            # Check if the user clicked the close button
+            if event.type == pygame.QUIT:
+                keep_going = False
+    
+    # Cleanup and exit
+    pygame.quit()
+    exit(0)
 
-
-# 1.4 - use loop to keep the game running 
-while keep_going:
-    # 1.5 - clear the screen before drawing it again
-    screen.fill(0)
-    #1.6 - draw the screen elements
-    board.display(screen)
-    #1.7 - update the screen
-    pygame.display.flip() # will update the contents of the entire display, and faster than .update()
-    # 1.8 - loop through the events
-    for event in pygame.event.get():
-        board.onEvent(event)
-        
-        # check if the event is the X button
-        if event.type==pygame.QUIT:
-            keep_going = False
-            
-
-#1.9 exit pygame and python
-pygame.quit()
-exit(0) 
+if __name__ == "__main__":
+    main()

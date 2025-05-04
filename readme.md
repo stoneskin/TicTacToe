@@ -8,7 +8,7 @@ This project is a practice exercise for learning Object-Oriented Programming (OO
 
 ## Play
 
-To play, download the source code and run `main.py`. Click on the grid to place your checker. The game alternates between Player X and Player O. When the game ends (win or draw), press 'R' to reset and start a new game.
+To play, download the source code and run `main.py`. Click on the grid to place your checker. The game alternates between Player X and Player O. When the game ends (win or draw), press 'R' or click the "Restart" button to reset and start a new game.
 
 ![screenshot](screenshot.png)
 
@@ -23,13 +23,26 @@ This section explains key Object-Oriented Programming concepts demonstrated in t
 **Example**: In `checker.py`, the `Checker` class is defined as a base class for game pieces. It encapsulates attributes like `value` (either 'X' or 'O'), `img` (the image to display), and `position` (where on the screen to display it). Methods like `display()` define behavior to render the checker on the screen.
 
 ```python
-class Checker:    
-    def __init__(self, val:str, img:any, pos:tuple[int,int]) -> None:
-        self.value = val
-        self.img = pygame.transform.scale(img, (100,100))
-        self.position:tuple[int,int] = pos
+class Checker:
+    """Base class for a TicTacToe checker piece (X or O)."""
+    def __init__(self, value: str, img: pygame.Surface, pos: Tuple[int, int]) -> None:
+        """Initialize a checker with a value, image, and position.
+        
+        Args:
+            value: The value of the checker ('X' or 'O').
+            img: The image surface for the checker.
+            pos: A tuple of (x, y) coordinates for the checker's position.
+        """
+        self.value = value
+        self.img = pygame.transform.scale(img, (CHECKER_SIZE, CHECKER_SIZE))
+        self.position: Tuple[int, int] = pos
     
-    def display(self, screen) -> None:
+    def display(self, screen: pygame.Surface) -> None:
+        """Display the checker on the screen.
+        
+        Args:
+            screen: The Pygame surface to draw on.
+        """
         screen.blit(self.img, self.position)
 ```
 
@@ -43,15 +56,36 @@ class Checker:
 
 ```python
 class CheckerO(Checker):
-    imgO:any = pygame.image.load("checker_O.png")
-    
-    def __init__(self, pos:tuple[int,int]):
-        super().__init__("O", self.imgO, pos) 
+    """Class for an 'O' checker piece."""
+    def __init__(self, pos: Tuple[int, int]) -> None:
+        """Initialize an 'O' checker with a position.
+        
+        Args:
+            pos: A tuple of (x, y) coordinates for the checker's position.
+        """
+        try:
+            img_o = pygame.image.load("checker_O.png")
+        except pygame.error as e:
+            print(f"Error loading O checker image: {e}")
+            img_o = pygame.Surface((CHECKER_SIZE, CHECKER_SIZE))
+            img_o.fill((255, 0, 0))  # Fallback red surface
+        super().__init__("O", img_o, pos)
 
 class CheckerX(Checker):
-    imgX:any = pygame.image.load("checker_X.png") 
-    def __init__(self, pos:tuple[int,int]):
-        super().__init__("X", self.imgX, pos) 
+    """Class for an 'X' checker piece."""
+    def __init__(self, pos: Tuple[int, int]) -> None:
+        """Initialize an 'X' checker with a position.
+        
+        Args:
+            pos: A tuple of (x, y) coordinates for the checker's position.
+        """
+        try:
+            img_x = pygame.image.load("checker_X.png")
+        except pygame.error as e:
+            print(f"Error loading X checker image: {e}")
+            img_x = pygame.Surface((CHECKER_SIZE, CHECKER_SIZE))
+            img_x.fill((0, 0, 255))  # Fallback blue surface10n:1
+        super().__init__("X", img_x, pos)
 ```
 
 **Usage**: This allows for polymorphic behavior where the game can treat both `CheckerO` and `CheckerX` as `Checker` objects, simplifying code in `board.py` when displaying checkers.
@@ -64,13 +98,22 @@ class CheckerX(Checker):
 
 ```python
 class Board:
-    def __init__(self, x:float, y:float, width:int, height:int) -> None:
-        self.pos:tuple[float,float] = [x,y]
-        self.currentPlayer:str = 'x'
-        self.gameOver:bool = False
-        self.winner:str = None
-        self.statusMessage:str = "Player X's Turn"
-        self.checkerPositions:list[list[CheckerGrid]] = []
+    """A class representing the TicTacToe game board."""
+    def __init__(self, x: float, y: float, width: int, height: int) -> None:
+        """Initialize the game board with position and dimensions.
+        
+        Args:
+            x: The x-coordinate of the board's top-left corner.
+            y: The y-coordinate of the board's top-left corner.
+            width: The width of the board in pixels.
+            height: The height of the board in pixels.
+        """
+        self.pos: Tuple[float, float] = (x, y)
+        self.current_player: str = 'x'
+        self.game_over: bool = False
+        self.winner: str = None
+        self.status_message: str = "Player X's Turn"
+        self.checker_positions: List[List[CheckerGrid]] = []
         # ... initialization of grid ...
 ```
 
@@ -100,20 +143,25 @@ while keep_going:
 **Example**: The `Board` class in `board.py` manages the game state with attributes like `gameOver` and `statusMessage`. When a player places a checker, it updates the state and checks for win conditions, altering the `statusMessage` to inform players of the game's progress.
 
 ```python
-def setNewChecker(self, pos:tuple[int,int]) -> None:
-    if self.gameOver:
+def set_new_checker(self, pos: Tuple[int, int]) -> None:
+    """Place a new checker on the board if the game is not over and the position is valid.
+    
+    Args:
+        pos: The (x, y) coordinates of the click position.
+    """
+    if self.game_over:
         return
-    checkData:CheckerGrid = self.findBoardPos(pos)
-    if checkData != None and checkData.checker is None:
-        if self.currentPlayer == 'x':
-            checkData.checker = CheckerX(checkData.pos)
-            self.currentPlayer = 'o'
-            self.statusMessage = "Player O's Turn"
+    check_data: CheckerGrid = self.find_board_pos(pos)
+    if check_data is not None and check_data.checker is None:
+        if self.current_player == 'x':
+            check_data.checker = CheckerX(check_data.pos)
+            self.current_player = 'o'
+            self.status_message = "Player O's Turn"
         else:
-            checkData.checker = CheckerO(checkData.pos)
-            self.currentPlayer = 'x'
-            self.statusMessage = "Player X's Turn"
-        self.checkWinCondition()
+            check_data.checker = CheckerO(check_data.pos)
+            self.current_player = 'x'
+            self.status_message = "Player X's Turn"
+        self.check_win_condition()
 ```
 
 **Usage**: This state management allows the game to respond to user actions, display whose turn it is, and end the game appropriately when someone wins or the game is a draw.
@@ -136,4 +184,4 @@ This TicTacToe game demonstrates how OOP concepts like classes, inheritance, enc
 - The game alternates between Player X and Player O.
 - The first player to get three of their checkers in a row (horizontally, vertically, or diagonally) wins.
 - If all cells are filled and no player has won, the game is a draw.
-- Press 'R' to reset the game after it ends.
+- Press 'R' or click the "Restart" button to reset the game after it ends.
